@@ -60,3 +60,40 @@ const ReportRequest = z.object({
   description: z.string().max(1000).optional(),
 });
 ```
+
+## FriendRequestResponse
+
+```typescript
+const FriendRequestResponse = z.object({
+  friendship_id: z.string().uuid(),
+  user: z.object({
+    id: z.string().uuid(),
+    username: z.string(),
+    display_name: z.string(),
+    avatar_url: z.string().nullable(),
+    level_name: z.string(),
+  }),
+  status: z.enum(["pending", "accepted", "declined", "blocked"]),
+  created_at: z.string(),
+});
+
+const RespondToFriendRequest = z.object({
+  action: z.enum(["accept", "decline"]),
+});
+
+const FriendListResponse = z.object({
+  friends: z.array(
+    z.object({
+      id: z.string().uuid(),
+      username: z.string(),
+      display_name: z.string(),
+      avatar_url: z.string().nullable(),
+      level: z.number(),
+      level_name: z.string(),
+      total_trips: z.number(),
+      friends_since: z.string(),
+    }),
+  ),
+  total: z.number(),
+});
+```

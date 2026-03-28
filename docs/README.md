@@ -81,4 +81,4 @@ Comprehensive backend architecture documentation for the Drift travel platform A
 
 ---
 
-**Total: ~95 endpoints across 12 route modules.**
+**Total: ~105+ endpoints across 12 route modules.**

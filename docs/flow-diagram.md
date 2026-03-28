@@ -26,11 +26,9 @@ flowchart TD
         SIGNUP[POST /auth/signup]
         LOGIN[POST /auth/login]
         OAUTH_G[POST /auth/oauth/google]
-        OAUTH_A[POST /auth/oauth/apple]
         SIGNUP --> JWT_ISSUED
         LOGIN --> JWT_ISSUED
         OAUTH_G --> JWT_ISSUED
-        OAUTH_A --> JWT_ISSUED
         JWT_ISSUED[JWT + Refresh Token Issued]
     end
 
@@ -133,6 +131,10 @@ flowchart TD
             CTX_RATES[Exchange Rates]
             CTX_MUSTDOS[Must-Dos]
             CTX_INTERESTS[Selected Interests]
+            CTX_DNA[Travel DNA — User Profile]
+            CTX_HISTORY[Past Trip Summaries]
+            CTX_FEEDBACK[Activity Feedback History]
+            CTX_VISITED[Previously Visited Places]
         end
 
         GEN_CONTEXT --> GEN_PROMPT[Build Gemini Prompt]
@@ -172,6 +174,29 @@ flowchart TD
     %% ═══════════════════════════════════════
 
     GEN_CACHE --> ITIN_VIEW[View Generated Itinerary]
+
+    %% ═══════════════════════════════════════
+    %% TRIP COLLABORATION
+    %% ═══════════════════════════════════════
+
+    ITIN_VIEW --> COLLAB_START[Invite Friends / Manage Members]
+
+    subgraph COLLABORATION[Trip Collaboration]
+        direction TB
+        INVITE["POST /trips/:id/invite/:userId"]
+        REQUEST_JOIN["POST /trips/:id/request-join"]
+        RESPOND["PATCH /trips/:id/members/:memberId"]
+        LIST_MEMBERS["GET /trips/:id/members"]
+        CHANGE_ROLE["PATCH /trips/:id/members/:memberId/role"]
+        REMOVE_MEMBER["DELETE /trips/:id/members/:memberId"]
+
+        INVITE --> RESPOND
+        REQUEST_JOIN --> RESPOND
+        RESPOND -->|Accepted| LIST_MEMBERS
+    end
+
+    COLLAB_START --> INVITE
+    COLLAB_START --> LIST_MEMBERS
 
     subgraph EDITING[Itinerary Editing]
         direction TB
@@ -272,7 +297,31 @@ flowchart TD
     end
 
     QUEST_COMPLETE --> PHOTO_PIPELINE
+    %% ═══════════════════════════════════════
+    %% GROUP CHALLENGES
+    %% ═══════════════════════════════════════
 
+    ITIN_VIEW --> CHALLENGES_START[Group Challenges]
+
+    subgraph GROUP_CHALLENGES[Group Challenges — Shared Trips Only]
+        direction TB
+        CH_CREATE[\"POST /trips/:id/challenges\"]
+        CH_LIST[\"GET /trips/:id/challenges\"]
+        CH_DETAIL[\"GET /trips/:id/challenges/:id\"]
+        CH_PROGRESS[\"POST .../progress — Auto or Manual\"]
+        CH_LEADER[\"GET .../leaderboard\"]
+
+        CH_CREATE --> CH_LIST
+        CH_LIST --> CH_DETAIL
+        CH_DETAIL --> CH_PROGRESS
+        CH_PROGRESS --> CH_LEADER
+        CH_LEADER -->|Winner determined| CH_REWARD[Bonus XP Granted]
+    end
+
+    CHALLENGES_START --> CH_CREATE
+    CHALLENGES_START --> CH_LIST
+    QUEST_COMPLETE -->|Auto-updates| CH_PROGRESS
+    AUTO_CHECKIN -->|Auto-updates| CH_PROGRESS
     subgraph PHOTO_PIPELINE[Photo Verification Pipeline]
         direction TB
         PH_UPLOAD[Upload Photo to R2]
@@ -454,6 +503,60 @@ flowchart TD
 
     PH_MANUAL --> ADMIN_PHOTOS
     REPORT --> ADMIN_REPORTS
+
+    %% ═══════════════════════════════════════
+    %% ACTIVITY FEEDBACK & TRIP PHOTOS
+    %% ═══════════════════════════════════════
+
+    ITIN_VIEW --> FEEDBACK_START[Rate Activities & Upload Photos]
+
+    subgraph FEEDBACK[Activity Feedback & Trip Photos]
+        direction TB
+        FB_RATE["POST /trips/:id/activities/:activityId/feedback"]
+        FB_LIST["GET /trips/:id/feedback"]
+        PH_TRIP_UPLOAD["POST /trips/:id/photos"]
+        PH_TRIP_LIST["GET /trips/:id/photos"]
+        PH_TRIP_DELETE["DELETE /trips/:id/photos/:photoId"]
+
+        FB_RATE --> FB_LIST
+        PH_TRIP_UPLOAD --> PH_TRIP_LIST
+        PH_TRIP_UPLOAD --> R2_STORAGE
+    end
+
+    FEEDBACK_START --> FB_RATE
+    FEEDBACK_START --> PH_TRIP_UPLOAD
+
+    %% ═══════════════════════════════════════
+    %% TRIP COMPLETION & MEMORIES
+    %% ═══════════════════════════════════════
+
+    subgraph TRIP_COMPLETION[Trip Completion & Memory Generation]
+        direction TB
+        TRIP_COMPLETE["POST /trips/:id/complete"]
+        COLLECT_SIGNALS[Collect: Check-ins + Skips + Feedback + Photos + Quests + Challenges]
+        GEN_MEMORY[Gemini: Generate Memory Summary + Highlights]
+        UPDATE_DNA[Gemini: Update Travel DNA]
+        SAVE_MEMORY[Save Memory to DB]
+
+        TRIP_COMPLETE --> COLLECT_SIGNALS
+        COLLECT_SIGNALS --> GEN_MEMORY
+        COLLECT_SIGNALS --> UPDATE_DNA
+        GEN_MEMORY --> SAVE_MEMORY
+        UPDATE_DNA --> SAVE_DNA[Update profiles.travel_dna]
+    end
+
+    LIVE --> TRIP_COMPLETION
+
+    subgraph MEMORIES[Trip History & Memories]
+        direction TB
+        MEM_HISTORY["GET /trips/history"]
+        MEM_DETAIL["GET /trips/:id/memories"]
+
+        MEM_HISTORY --> MEM_DETAIL
+    end
+
+    MY_TRIPS --> MEM_HISTORY
+    MEM_DETAIL --> ITIN_VIEW
 
     %% ═══════════════════════════════════════
     %% INFRASTRUCTURE LAYER

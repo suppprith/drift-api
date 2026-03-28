@@ -117,3 +117,72 @@ const LeaderboardResponse = z.object({
   my_rank: z.number().nullable(),
 });
 ```
+
+## Group Challenge DTOs
+
+```typescript
+const CreateGroupChallengeRequest = z.object({
+  challenge_type: z.enum([
+    "race",
+    "collective",
+    "versus",
+    "scavenger_hunt",
+    "streak",
+  ]),
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  emoji: z.string().optional(),
+  target_type: z.enum(["quest", "checkin", "photo", "activity", "custom"]),
+  target_count: z.number().int().min(1).max(100).default(1),
+  target_quest_ids: z.array(z.string().uuid()).optional(),
+  deadline: z.string().datetime().optional(),
+  xp_reward: z.number().int().min(0).max(1000).default(100),
+});
+
+const GroupChallengeResponse = z.object({
+  id: z.string().uuid(),
+  trip_id: z.string().uuid(),
+  created_by: z.object({
+    id: z.string().uuid(),
+    username: z.string(),
+    display_name: z.string(),
+    avatar_url: z.string().nullable(),
+  }),
+  challenge_type: z.enum([
+    "race",
+    "collective",
+    "versus",
+    "scavenger_hunt",
+    "streak",
+  ]),
+  title: z.string(),
+  description: z.string().nullable(),
+  emoji: z.string().nullable(),
+  target_type: z.string(),
+  target_count: z.number(),
+  deadline: z.string().nullable(),
+  xp_reward: z.number(),
+  status: z.enum(["active", "completed", "expired", "cancelled"]),
+  winner: z
+    .object({
+      id: z.string().uuid(),
+      username: z.string(),
+      display_name: z.string(),
+    })
+    .nullable(),
+  progress: z.array(
+    z.object({
+      user: z.object({
+        id: z.string().uuid(),
+        username: z.string(),
+        display_name: z.string(),
+        avatar_url: z.string().nullable(),
+      }),
+      progress: z.number(),
+      completed: z.boolean(),
+      completed_at: z.string().nullable(),
+    }),
+  ),
+  created_at: z.string(),
+});
+```

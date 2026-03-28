@@ -29,6 +29,15 @@ drift:leaderboard:dest:pokhara-nepal     → destination leaderboard
 drift:lock:gen:{tripId}                   → distributed lock for generation
 drift:feed:trending                       → trending feed cache
 drift:user:{userId}:notifications:unread → unread notification count
+drift:user:{userId}:friends               → cached friend IDs (SET)
+drift:user:{userId}:friend_requests       → pending incoming request count
+drift:trip:{tripId}:members               → cached member IDs (SET)
+drift:trip:{tripId}:invites               → pending invite count
+drift:challenge:{challengeId}:progress    → HASH of userId → progress count
+drift:challenge:{challengeId}:leaderboard → SORTED SET for challenge ranking
+drift:user:{userId}:travel_dna             → cached travel DNA JSON (avoids DB read on generation)
+drift:user:{userId}:visited_places         → SET of destination_keys user has visited
+drift:trip:{tripId}:memory                 → cached memory response (completed trips, long TTL)
 ```
 
 ---
@@ -59,6 +68,9 @@ drift:user:{userId}:notifications:unread → unread notification count
 | Weather historical   | 30 days                 | Doesn't change       |
 | Exchange rates       | 24 hours                | Daily updates        |
 | Trip response        | 1 hour                  | User might edit      |
+| Travel DNA           | 24 hours                | Updates after trips  |
+| Visited places       | 7 days                  | Changes after trips  |
+| Trip memory          | 30 days                 | Rarely changes       |
 | API rate limits      | 1 minute sliding window | Short-lived          |
 | Gen rate limits      | 24 hours                | Daily quota          |
 | Leaderboards         | 5 minutes               | Near-real-time       |

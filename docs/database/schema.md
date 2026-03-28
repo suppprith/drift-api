@@ -24,6 +24,7 @@ CREATE TABLE profiles (
   total_countries INTEGER DEFAULT 0,
   total_lore_completed INTEGER DEFAULT 0,
   preferences JSONB DEFAULT '{}',
+  travel_dna JSONB DEFAULT '{}', -- evolving AI-learned preferences (top categories, pace, adventure level, etc.)
   is_pro BOOLEAN DEFAULT FALSE,
   pro_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -98,8 +99,32 @@ CREATE TABLE trips (
   -- Must-do tracking
   must_do_status JSONB DEFAULT '[]',
 
+  -- Memory (generated after trip completion)
+  memory_summary TEXT, -- AI-generated nostalgia summary of the trip
+  memory_highlights JSONB DEFAULT '[]', -- [{type, title, description, photo_url, activity_id}]
+  memory_stats JSONB, -- {activities_completed, activities_skipped, quests_done, xp_earned, km_walked, ...}
+  completed_at TIMESTAMPTZ, -- when the trip actually ended
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### trip_members
+
+Tracks who is part of a trip (collaborators, not just the owner).
+
+```sql
+CREATE TABLE trip_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner','editor','viewer')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+  invited_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  joined_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(trip_id, user_id)
 );
 ```
 
@@ -431,6 +456,20 @@ CREATE TABLE trip_upvotes (
 );
 ```
 
+### friendships
+
+```sql
+CREATE TABLE friendships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  requester_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  addressee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined','blocked')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(requester_id, addressee_id)
+);
+```
+
 ### trip_saves
 
 ```sql
@@ -513,6 +552,113 @@ CREATE TABLE reports (
   status TEXT DEFAULT 'open' CHECK (status IN ('open','reviewing','resolved','dismissed')),
   resolved_by UUID REFERENCES profiles(id),
   resolved_at TIMESTAMPTZ,
+
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+---
+
+## Group Challenges Tables
+
+### group_challenges
+
+Challenges that trip members can do together during a shared trip.
+
+```sql
+CREATE TABLE group_challenges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+
+  challenge_type TEXT NOT NULL CHECK (challenge_type IN ('race','collective','versus','scavenger_hunt','streak')),
+  title TEXT NOT NULL,
+  description TEXT,
+  emoji TEXT,
+
+  -- Conditions
+  target_type TEXT CHECK (target_type IN ('quest','checkin','photo','activity','custom')),
+  target_count INTEGER DEFAULT 1, -- e.g. "check in at 5 places"
+  target_quest_ids UUID[], -- specific quests if quest-based
+  deadline TIMESTAMPTZ, -- optional time limit
+
+  -- Rewards
+  xp_reward INTEGER DEFAULT 100,
+  bonus_reward JSONB, -- nullable bonus for winner/completers
+
+  status TEXT DEFAULT 'active' CHECK (status IN ('active','completed','expired','cancelled')),
+  winner_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### group_challenge_progress
+
+Tracks each member's progress on a group challenge.
+
+```sql
+CREATE TABLE group_challenge_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  challenge_id UUID NOT NULL REFERENCES group_challenges(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+
+  progress INTEGER DEFAULT 0,
+  completed BOOLEAN DEFAULT FALSE,
+  completed_at TIMESTAMPTZ,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(challenge_id, user_id)
+);
+```
+
+---
+
+## Personalization & Memories Tables
+
+### activity_feedback
+
+User feedback on activities — drives the personalization engine and travel DNA evolution.
+
+```sql
+CREATE TABLE activity_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  activity_id UUID NOT NULL REFERENCES itinerary_activities(id) ON DELETE CASCADE,
+
+  rating TEXT NOT NULL CHECK (rating IN ('loved','liked','neutral','disliked')),
+  comment TEXT, -- optional short note ("food was incredible", "too crowded")
+  was_skipped BOOLEAN DEFAULT FALSE, -- from live companion skip data
+  actual_duration_minutes INTEGER, -- how long they actually stayed (from check-in data)
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, activity_id)
+);
+```
+
+### trip_photos
+
+General trip photos (not quest-related). Users can upload memories from their trip.
+
+```sql
+CREATE TABLE trip_photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  activity_id UUID REFERENCES itinerary_activities(id) ON DELETE SET NULL, -- optional link to an activity
+  day_id UUID REFERENCES itinerary_days(id) ON DELETE SET NULL, -- optional link to a day
+
+  photo_url TEXT NOT NULL,
+  photo_r2_key TEXT NOT NULL,
+  caption TEXT,
+  lat FLOAT,
+  lng FLOAT,
+  taken_at TIMESTAMPTZ,
+
+  moderation_status TEXT DEFAULT 'approved' CHECK (moderation_status IN ('approved','flagged','removed')),
 
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
