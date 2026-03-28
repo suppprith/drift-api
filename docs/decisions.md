@@ -1,0 +1,12 @@
+# Architecture Decisions
+
+| Decision        | Choice                           | Rationale                                                                                                                                                                             |
+| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI Model        | Gemini 2.5 Flash over 2.0 Flash  | 2.0 Flash is being deprecated June 2026. 2.5 Flash has better vision, structured output, and the same free tier.                                                                      |
+| Cache           | Upstash Redis over Cloudflare KV | Redis gives us sorted sets (leaderboards), pub/sub, atomic counters, and more flexible data structures than KV's simple key-value. KV is still used for static assets via CF Workers. |
+| ML Models       | No custom ML models              | Gemini Vision + Google Cloud Vision covers all image recognition needs. Custom ML adds complexity with no benefit at this scale.                                                      |
+| Background Jobs | Upstash QStash                   | CF Workers can't run long processes. QStash HTTP webhook-based queuing handles async tasks (Reddit fetch, TripAdvisor enrichment, image verification).                                |
+| Architecture    | Single repo (drift-api)          | All backend logic in one Hono app deployed as a single CF Worker. Route-based code splitting keeps it organized. No microservices overhead.                                           |
+| Auth            | Supabase for auth                | Handles Google/Apple OAuth, JWTs, password reset, account deletion. No need to build auth from scratch.                                                                               |
+| Vector Search   | pgvector for semantic search     | Supabase supports the pgvector extension. Embeddings stored alongside trip data. No external vector DB needed.                                                                        |
+| File Storage    | R2 for file storage              | Photos, PDFs, exports. S3-compatible, global CDN, 10GB free.                                                                                                                          |

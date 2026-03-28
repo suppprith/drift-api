@@ -1,0 +1,24 @@
+# Auth Endpoints
+
+> Phase 1: Foundation
+
+## Health & System
+
+```
+GET    /health                           → { status, version, uptime }
+GET    /health/detailed                  → { status, db, redis, ai, weather } (admin only)
+```
+
+## Auth
+
+```
+POST   /auth/signup                      → Sign up with email/password
+POST   /auth/login                       → Login, returns JWT + refresh token
+POST   /auth/logout                      → Invalidate session
+POST   /auth/refresh                     → Refresh JWT
+POST   /auth/oauth/google               → Google OAuth callback
+POST   /auth/oauth/apple                → Apple OAuth callback
+POST   /auth/forgot-password            → Send password reset email
+POST   /auth/reset-password             → Reset password with token
+DELETE /auth/account                     → Delete account + all data (GDPR)
+```
