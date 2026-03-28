@@ -10,7 +10,7 @@ _Depends on Phase 3_
 4. SSE streaming endpoint for generation
 5. Post-processing: geocode validation, cost totals
 6. Trip CRUD endpoints
-7. Save generated itinerary to Supabase
+7. Save generated itinerary to PostgreSQL
 8. Redis caching of generated trips
 
 ## Relevant Files

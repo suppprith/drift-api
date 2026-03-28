@@ -360,7 +360,7 @@ const ActivityFeedbackResponse = z.object({
 
 ```typescript
 const UploadTripPhotoRequest = z.object({
-  photo: z.string(), // base64 or R2 presigned upload key
+  photo: z.string(), // base64 or S3 presigned upload key
   activity_id: z.string().uuid().optional(), // link to specific activity
   day_number: z.number().optional(), // link to specific day
   caption: z.string().max(500).optional(),

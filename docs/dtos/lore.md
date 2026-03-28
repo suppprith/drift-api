@@ -34,7 +34,7 @@ const QuestResponse = z.object({
 const SubmitQuestCompletionRequest = z.object({
   quest_id: z.string().uuid(),
   trip_id: z.string().uuid().optional(),
-  photo: z.string(), // base64 or R2 presigned upload key
+  photo: z.string(), // base64 or S3 presigned upload key
   caption: z.string().max(500).optional(),
   lat: z.number(),
   lng: z.number(),

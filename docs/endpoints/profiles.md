@@ -11,5 +11,5 @@ GET    /profiles/me/saved                → Saved trips
 GET    /profiles/me/notifications        → Notifications (paginated)
 PATCH  /profiles/me/notifications/read   → Mark notifications as read
 GET    /profiles/me/stats                → Travel stats (countries, trips, XP, etc.)
-PUT    /profiles/me/avatar               → Upload avatar to R2
+PUT    /profiles/me/avatar               → Upload avatar to S3 MinIO
 ```

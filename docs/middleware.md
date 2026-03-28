@@ -11,7 +11,7 @@ app.use("*", secureHeaders()); // 4. Security headers (CSP, HSTS, etc.)
 app.use("*", corsMiddleware()); // 5. CORS (configured per environment)
 app.use("*", errorHandler()); // 6. Global error handler + Sentry
 app.use("/api/*", rateLimiter()); // 7. Rate limiting (Redis-backed)
-app.use("/api/protected/*", auth()); // 8. JWT validation (Supabase JWKS)
+app.use("/api/protected/*", auth()); // 8. Session validation (Better Auth)
 app.use("*", bodyLimit({ maxSize: 10 * 1024 * 1024 })); // 9. 10MB body limit
 ```
 

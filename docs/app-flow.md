@@ -108,7 +108,7 @@ When the user hits generate:
 
 1. The app saves a trip draft with all their preferences
 2. AI receives **two layers of context**:
-   - **Destination context** (shared): destination research, Reddit intel, weather, exchange rates
+   - **Destination context** (shared): destination research, Reddit intel, TripAdvisor intel (top-rated spots, ratings, traveler sentiment), weather, exchange rates
    - **User-specific context** (unique to this user): their travel DNA, past trip history, activity feedback, previously visited places, quest patterns, and behavioral signals
 3. The itinerary streams back in real time (the user sees it building day by day)
 4. Each day includes:
@@ -120,7 +120,7 @@ When the user hits generate:
    - **Rain backup plans** — alternative activities if weather turns bad
    - **Tourist trap warnings** — places to skip, with better local alternatives
    - **Running cost tracker** — see spending build up day by day
-5. After streaming, each location is validated on the map, enriched with TripAdvisor ratings, and transit routes are calculated between stops
+5. After streaming, each location is validated on the map, enriched with detailed TripAdvisor data (per-activity URLs, photos), and transit routes are calculated between stops
 6. **Repeat filter** — the AI never suggests places the user has already visited or checked into on past trips
 7. Must-do items are cross-referenced to make sure they're included
 

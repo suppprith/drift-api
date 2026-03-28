@@ -5,7 +5,7 @@
 ```
 On trip creation/update:
   → Generate text embedding of trip title + destinations + vibes + budget
-  → Store in Supabase (pgvector extension) or dedicated vector column
+  → Store in PostgreSQL (pgvector extension) or dedicated vector column
   → Index for fast cosine similarity search
 
 On library search:
@@ -21,4 +21,4 @@ Use Gemini `text-embedding-004` model (free tier: 1500 req/day). Each embedding 
 
 ## Storage
 
-Supabase supports the `pgvector` extension. Embeddings stored alongside trip data. No external vector DB needed.
+PostgreSQL supports the `pgvector` extension. Embeddings stored alongside trip data. No external vector DB needed.

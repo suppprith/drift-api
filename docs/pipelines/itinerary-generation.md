@@ -13,8 +13,12 @@ User presses "Generate"
 ┌─ ASSEMBLE CONTEXT (parallel) ─────────────────────────┐
 │                                                        │
 │  ── Destination Context (shared, from cache) ──        │
-│  • Destination research (Redis → Supabase cache)       │
-│  • Reddit intel (Redis → Supabase cache)               │
+│  • Destination research (Redis → PostgreSQL cache)       │
+│  • Reddit intel (Redis → PostgreSQL cache)               │
+│  • TripAdvisor intel (Redis → PostgreSQL cache)         │
+│    → Top-rated attractions, restaurants, experiences    │
+│    → Ratings, review counts, traveler sentiment        │
+│    → Category breakdown (things to do, dining, etc.)   │
 │  • Weather data (Redis → Open-Meteo)                   │
 │  • Exchange rates (Redis → ExchangeRate-API)            │
 │                                                        │
@@ -42,6 +46,7 @@ User presses "Generate"
 │                                                        │
 │  Context payload:                                      │
 │    • Destination research + Reddit (raw material)      │
+│    • TripAdvisor intel (ratings, reviews, top spots)   │
 │    • Weather + exchange rates (hard facts)             │
 │    • User travel DNA (personality profile)             │
 │    • Past feedback signals (likes, skips, ratings)     │
@@ -64,7 +69,9 @@ User presses "Generate"
          ▼
 ┌─ POST-PROCESSING (parallel per day) ──────────────────┐
 │  • Geocode each activity → Mapbox → validate/fix latlng│
-│  • TripAdvisor enrichment → rating + review count      │
+│  • TripAdvisor deep enrichment → per-activity URL,     │
+│    exact review count, photos (supplements pre-gen     │
+│    context with activity-specific detail)               │
 │  • Must-do cross-reference → flag missing experiences  │
 │  • Repeat filter → reject any activity at a place the  │
 │    user has already checked in or visited               │
@@ -74,7 +81,7 @@ User presses "Generate"
          │
          ▼
 ┌─ SAVE + EMIT ──────────────────────────────────────────┐
-│  • Batch insert days + activities + transit to Supabase │
+│  • Batch insert days + activities + transit to PostgreSQL │
 │  • Cache trip in Redis (1hr TTL, keyed per user+trip)   │
 │  • Final SSE event: { type: 'complete', slug, totals } │
 │  • Async: queue TripAdvisor enrichment if cache miss    │

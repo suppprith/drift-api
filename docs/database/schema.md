@@ -2,13 +2,24 @@
 
 ## Core Tables
 
+### Better Auth Tables (auto-managed)
+
+Better Auth automatically creates and manages these tables:
+
+- **`user`** — id, name, email, emailVerified, image, createdAt, updatedAt
+- **`session`** — id, userId, token, expiresAt, ipAddress, userAgent, createdAt, updatedAt
+- **`account`** — id, userId, accountId, providerId (credential/google), accessToken, refreshToken, etc.
+- **`verification`** — id, identifier, value, expiresAt, createdAt, updatedAt
+
+See [Better Auth docs](https://www.better-auth.com/docs) for full schema details.
+
 ### profiles
 
-Extends Supabase `auth.users`.
+Extends Better Auth's `user` table with app-specific fields.
 
 ```sql
 CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
   username TEXT UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
@@ -362,7 +373,7 @@ CREATE TABLE quest_completions (
   trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
 
   photo_url TEXT NOT NULL,
-  photo_r2_key TEXT NOT NULL,
+  photo_s3_key TEXT NOT NULL,
   photo_lat FLOAT,
   photo_lng FLOAT,
   photo_taken_at TIMESTAMPTZ,
@@ -652,7 +663,7 @@ CREATE TABLE trip_photos (
   day_id UUID REFERENCES itinerary_days(id) ON DELETE SET NULL, -- optional link to a day
 
   photo_url TEXT NOT NULL,
-  photo_r2_key TEXT NOT NULL,
+  photo_s3_key TEXT NOT NULL,
   caption TEXT,
   lat FLOAT,
   lng FLOAT,

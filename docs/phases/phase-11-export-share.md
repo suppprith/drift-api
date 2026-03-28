@@ -2,7 +2,7 @@
 
 ## Tasks
 
-1. PDF generation endpoint (returns R2 URL for pre-rendered PDF)
+1. PDF generation endpoint (returns S3 MinIO URL for pre-rendered PDF)
 2. Share link with OG metadata
 3. iCal export
 4. GPX route export

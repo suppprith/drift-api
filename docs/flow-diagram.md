@@ -22,17 +22,17 @@ flowchart TD
 
     GUEST_TOKEN --> GUEST_HOME[Home — Guest Mode]
 
-    subgraph AUTH_FLOW[Authentication]
-        SIGNUP[POST /auth/signup]
-        LOGIN[POST /auth/login]
-        OAUTH_G[POST /auth/oauth/google]
-        SIGNUP --> JWT_ISSUED
-        LOGIN --> JWT_ISSUED
-        OAUTH_G --> JWT_ISSUED
-        JWT_ISSUED[JWT + Refresh Token Issued]
+    subgraph AUTH_FLOW[Authentication — Better Auth]
+        SIGNUP[POST /api/auth/sign-up/email]
+        LOGIN[POST /api/auth/sign-in/email]
+        OAUTH_G[POST /api/auth/sign-in/social — Google]
+        SIGNUP --> SESSION_ISSUED
+        LOGIN --> SESSION_ISSUED
+        OAUTH_G --> SESSION_ISSUED
+        SESSION_ISSUED[Session Created — Cookie Set]
     end
 
-    JWT_ISSUED --> HOME
+    SESSION_ISSUED --> HOME
 
     %% ─── GUEST HOME (limited) ───
     GUEST_HOME --> NEW_TRIP
@@ -51,7 +51,7 @@ flowchart TD
     %% ─── GUEST MIGRATION ───
     subgraph GUEST_MIGRATION[Guest → Account Migration]
         direction TB
-        MIG_SIGNUP["POST /auth/signup + X-Guest-Token"]
+        MIG_SIGNUP["Sign up via Better Auth + POST /auth/migrate-guest"]
         MIG_TRANSFER[Transfer trip ownership]
         MIG_CLEANUP[Delete guest session from Redis]
         MIG_SIGNUP --> MIG_TRANSFER --> MIG_CLEANUP
@@ -98,8 +98,10 @@ flowchart TD
         direction LR
         REDDIT_FETCH[Fetch Reddit Intel]
         AI_RESEARCH[Gemini: Destination Research]
+        TA_FETCH[TripAdvisor: Top Spots + Ratings]
         REDDIT_FETCH --> CACHE_REDIS_1[(Redis Cache)]
         AI_RESEARCH --> CACHE_REDIS_1
+        TA_FETCH --> CACHE_REDIS_1
     end
 
     OB_3 --> DEST_TRANSPORT
@@ -127,6 +129,7 @@ flowchart TD
             CTX_PREFS[Trip Preferences]
             CTX_DEST[Destination Research]
             CTX_REDDIT[Reddit Intel]
+            CTX_TA[TripAdvisor Intel — Top Spots + Ratings]
             CTX_WEATHER[Weather Data]
             CTX_RATES[Exchange Rates]
             CTX_MUSTDOS[Must-Dos]
@@ -157,13 +160,13 @@ flowchart TD
         subgraph GEN_POST[Post-Processing — Parallel per Day]
             direction LR
             PP_GEO[Mapbox Geocode Validation]
-            PP_TA[TripAdvisor Enrichment]
+            PP_TA[TripAdvisor Deep Enrichment — per-activity URLs + photos]
             PP_MUSTDO[Must-Do Cross-Reference]
             PP_COSTS[Compute Running Totals]
             PP_TRANSIT[Generate Transit Polylines]
         end
 
-        GEN_POST --> GEN_SAVE[Batch Insert to Supabase]
+        GEN_POST --> GEN_SAVE[Batch Insert to PostgreSQL]
         GEN_SAVE --> GEN_CACHE[Cache in Redis — 1hr TTL]
     end
 
@@ -324,7 +327,7 @@ flowchart TD
     AUTO_CHECKIN -->|Auto-updates| CH_PROGRESS
     subgraph PHOTO_PIPELINE[Photo Verification Pipeline]
         direction TB
-        PH_UPLOAD[Upload Photo to R2]
+        PH_UPLOAD[Upload Photo to S3 MinIO]
         PH_EXIF[Extract EXIF: GPS + Timestamp]
         PH_GEO_CHECK{GPS Within Geofence?}
         PH_MODERATION[Google Cloud Vision SafeSearch]
@@ -457,7 +460,7 @@ flowchart TD
     end
 
     ITIN_VIEW --> EXPORT
-    EXP_PDF --> R2_STORAGE[(Cloudflare R2)]
+    EXP_PDF --> S3_STORAGE[(S3 MinIO)]
     EXP_SHARE --> OG_META[OG Metadata + Share URL]
 
     %% ═══════════════════════════════════════
@@ -475,7 +478,7 @@ flowchart TD
         PROF_STATS["GET /profiles/me/stats"]
         PROF_AVATAR["PUT /profiles/me/avatar"]
 
-        PROF_AVATAR --> R2_STORAGE
+        PROF_AVATAR --> S3_STORAGE
     end
 
     PROFILE_VIEW --> PROFILE
@@ -520,7 +523,7 @@ flowchart TD
 
         FB_RATE --> FB_LIST
         PH_TRIP_UPLOAD --> PH_TRIP_LIST
-        PH_TRIP_UPLOAD --> R2_STORAGE
+        PH_TRIP_UPLOAD --> S3_STORAGE
     end
 
     FEEDBACK_START --> FB_RATE
@@ -564,9 +567,9 @@ flowchart TD
 
     subgraph INFRA[Infrastructure Layer]
         direction LR
-        SUPABASE[(Supabase PostgreSQL)]
+        POSTGRES[(PostgreSQL)]
         REDIS[(Upstash Redis)]
-        R2[(Cloudflare R2)]
+        S3[(S3 MinIO)]
         QSTASH[Upstash QStash]
         GEMINI[Gemini 2.5 Flash]
         CLOUD_VISION[Google Cloud Vision]
@@ -595,11 +598,11 @@ flowchart TD
 flowchart LR
     CLIENT[Client Request] --> REDIS_HIT{Redis Cache Hit?}
     REDIS_HIT -->|Yes| RETURN_CACHED[Return Cached Response]
-    REDIS_HIT -->|No| SUPA_HIT{Supabase Cache Hit?}
-    SUPA_HIT -->|Yes| WRITE_REDIS[Write to Redis] --> RETURN_CACHED
-    SUPA_HIT -->|No| EXTERNAL[Fetch from External API / Gemini]
-    EXTERNAL --> WRITE_SUPA[Write to Supabase]
-    WRITE_SUPA --> WRITE_REDIS
+    REDIS_HIT -->|No| PG_HIT{PostgreSQL Cache Hit?}
+    PG_HIT -->|Yes| WRITE_REDIS[Write to Redis] --> RETURN_CACHED
+    PG_HIT -->|No| EXTERNAL[Fetch from External API / Gemini]
+    EXTERNAL --> WRITE_PG[Write to PostgreSQL]
+    WRITE_PG --> WRITE_REDIS
 
     style RETURN_CACHED fill:#ECFDF5,stroke:#10B981
     style EXTERNAL fill:#FEF3C7,stroke:#F59E0B
@@ -675,7 +678,7 @@ sequenceDiagram
     participant W as CF Worker
     participant R as Redis
     participant G as Gemini 2.5 Flash
-    participant S as Supabase
+    participant S as PostgreSQL
     participant M as Mapbox
 
     C->>W: POST /trips/:id/generate

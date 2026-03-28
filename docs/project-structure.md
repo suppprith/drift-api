@@ -8,9 +8,11 @@ drift-api/
 │   ├── routes/                           # Feature-based route modules
 │   │   ├── health.ts                     # GET /health, GET /health/detailed
 │   │   ├── auth/
-│   │   │   ├── index.ts                  # POST /auth/signup, /auth/login, /auth/logout, /auth/refresh
-│   │   │   ├── schemas.ts               # Zod schemas for auth DTOs
-│   │   │   └── handlers.ts              # Handler functions
+│   │   │   ├── index.ts                  # Better Auth handler mount + custom guest endpoints
+│   │   │   ├── schemas.ts               # Zod schemas for guest/migration DTOs
+│   │   │   └── handlers.ts              # Guest session + migration handlers
+│   ├── lib/
+│   │   └── auth.ts                       # Better Auth config (providers, plugins, DB adapter)
 │   │   ├── onboarding/
 │   │   │   ├── index.ts                  # Onboarding flow endpoints
 │   │   │   ├── schemas.ts               # Destination search, transport, profile schemas
@@ -61,7 +63,7 @@ drift-api/
 │   │       └── handlers.ts
 │   │
 │   ├── middleware/
-│   │   ├── auth.ts                       # Supabase JWT validation via JWKS
+│   │   ├── auth.ts                       # Better Auth session validation middleware
 │   │   ├── rateLimit.ts                  # Redis sliding-window rate limiter
 │   │   ├── cors.ts                       # CORS configuration
 │   │   ├── errorHandler.ts              # Global error handler + Sentry
@@ -85,10 +87,10 @@ drift-api/
 │   │   │   └── streaming.ts            # SSE streaming utilities
 │   │   ├── cache/
 │   │   │   ├── redis.ts                 # Upstash Redis client wrapper
-│   │   │   ├── layers.ts               # Multi-layer cache: Redis → Supabase → API
+│   │   │   ├── layers.ts               # Multi-layer cache: Redis → PostgreSQL → API
 │   │   │   └── keys.ts                 # Cache key naming conventions
 │   │   ├── data/
-│   │   │   ├── supabase.ts             # Supabase client factory
+│   │   │   ├── db.ts                   # PostgreSQL client (pg / postgres.js)
 │   │   │   ├── trips.ts               # Trip data access
 │   │   │   ├── itineraries.ts         # Itinerary data access
 │   │   │   ├── profiles.ts           # User profile data access

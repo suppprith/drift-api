@@ -7,7 +7,7 @@ User submits photo + quest_id + lat/lng
          │
          ▼
 ┌─ STEP 1: UPLOAD & METADATA ───────────────────────────┐
-│  • Upload photo to Cloudflare R2                        │
+│  • Upload photo to S3 MinIO                             │
 │  • Extract EXIF: GPS coords, timestamp, camera model   │
 │  • Validate: photo taken within last 24 hours           │
 │  • Validate: GPS coords within quest geofence radius    │

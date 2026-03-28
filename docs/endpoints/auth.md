@@ -17,15 +17,24 @@ POST   /auth/guest                       → Create guest session, returns guest
 
 See [Guest System](../guest-system.md) for full details.
 
-## Auth
+## Auth (Better Auth)
+
+Better Auth handles these routes automatically via its Hono integration (`app.all("/api/auth/*", betterAuth.handler)`):
 
 ```
-POST   /auth/signup                      → Sign up with email/password (+ migrate guest if X-Guest-Token)
-POST   /auth/login                       → Login, returns JWT + refresh token (+ migrate guest if X-Guest-Token)
-POST   /auth/logout                      → Invalidate session
-POST   /auth/refresh                     → Refresh JWT
-POST   /auth/oauth/google               → Google OAuth callback
-POST   /auth/forgot-password            → Send password reset email
-POST   /auth/reset-password             → Reset password with token
-DELETE /auth/account                     → Delete account + all data (GDPR)
+POST   /api/auth/sign-up/email          → Sign up with email/password
+POST   /api/auth/sign-in/email          → Login with email/password
+POST   /api/auth/sign-in/social         → Google OAuth (provider: "google")
+POST   /api/auth/sign-out               → End session
+GET    /api/auth/get-session            → Get current session + user
+POST   /api/auth/forget-password        → Send password reset email
+POST   /api/auth/reset-password         → Reset password with token
+POST   /api/auth/delete-user            → Delete account + all data (GDPR)
+```
+
+### Custom Auth Extensions
+
+```
+POST   /auth/guest                       → Create guest session (custom, not Better Auth)
+POST   /auth/migrate-guest              → Migrate guest trip to authenticated user (+ X-Guest-Token)
 ```

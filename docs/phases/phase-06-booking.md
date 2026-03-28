@@ -3,7 +3,7 @@
 ## Tasks
 
 1. Booking cart CRUD
-2. Cart stored in Redis (fast access) + Supabase (persistence)
+2. Cart stored in Redis (fast access) + PostgreSQL (persistence)
 3. Checkout endpoint (affiliate URL construction)
 4. Booking confirmation tracking
 5. Affiliate link generation (Google Flights, Booking.com, Viator)

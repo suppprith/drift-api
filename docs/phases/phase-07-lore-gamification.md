@@ -3,7 +3,7 @@
 ## Tasks
 
 1. Quest endpoints (list, nearby, active for trip)
-2. Photo upload to R2
+2. Photo upload to S3 MinIO
 3. Image recognition pipeline (Gemini Vision + Cloud Vision)
 4. Quest completion submission endpoint
 5. XP/level calculation service

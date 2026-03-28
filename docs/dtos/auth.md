@@ -2,6 +2,8 @@
 
 > `routes/auth/schemas.ts`
 
+Better Auth manages its own request/response types for sign-up, sign-in, OAuth, and session management. The DTOs below cover custom extensions (guest system, guest migration).
+
 ```typescript
 const GuestSessionRequest = z.object({}); // no body needed
 
@@ -10,36 +12,37 @@ const GuestSessionResponse = z.object({
   expires_at: z.number(), // Unix timestamp, 72h from now
 });
 
-const SignupRequest = z.object({
-  email: z.string().email().max(255),
-  password: z.string().min(8).max(128),
-  display_name: z.string().min(1).max(100),
-  home_city: z.string().max(100).optional(),
-  guest_token: z.string().uuid().optional(), // migrate guest session on signup
+const MigrateGuestRequest = z.object({
+  guest_token: z.string().uuid(),
 });
 
-const LoginRequest = z.object({
-  email: z.string().email(),
-  password: z.string(),
+const MigrateGuestResponse = z.object({
+  migrated: z.boolean(),
+  trip_id: z.string().uuid().nullable(),
 });
+```
 
-const AuthResponse = z.object({
-  user: z.object({
-    id: z.string().uuid(),
-    email: z.string().email(),
-    display_name: z.string(),
-    avatar_url: z.string().nullable(),
-    level: z.number(),
-    level_name: z.string(),
-    xp: z.number(),
-  }),
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_at: z.number(),
-});
+## Better Auth Session (reference)
 
-const OAuthCallbackRequest = z.object({
-  code: z.string(),
-  redirect_uri: z.string().url(),
-});
+Better Auth's `getSession` returns:
+
+```typescript
+// From Better Auth — not custom-defined
+{
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+  session: {
+    id: string;
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }
+}
 ```
