@@ -6,7 +6,9 @@ Comprehensive backend architecture documentation for the Drift travel platform A
 
 ### Architecture
 
+- [App Flow (Non-Technical)](./app-flow.md) — Plain-language walkthrough of every feature
 - [Flow Diagram](./flow-diagram.md) — Complete app flow with Mermaid diagrams
+- [Guest System](./guest-system.md) — Anonymous access, guest sessions, migration to accounts
 - [Technology Stack](./stack.md)
 - [Project Structure](./project-structure.md)
 - [Architecture Decisions](./decisions.md)

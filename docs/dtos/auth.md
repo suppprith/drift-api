@@ -3,11 +3,19 @@
 > `routes/auth/schemas.ts`
 
 ```typescript
+const GuestSessionRequest = z.object({}); // no body needed
+
+const GuestSessionResponse = z.object({
+  guest_token: z.string().uuid(),
+  expires_at: z.number(), // Unix timestamp, 72h from now
+});
+
 const SignupRequest = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128),
   display_name: z.string().min(1).max(100),
   home_city: z.string().max(100).optional(),
+  guest_token: z.string().uuid().optional(), // migrate guest session on signup
 });
 
 const LoginRequest = z.object({

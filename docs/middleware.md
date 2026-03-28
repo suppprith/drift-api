@@ -20,7 +20,8 @@ app.use("*", bodyLimit({ maxSize: 10 * 1024 * 1024 })); // 9. 10MB body limit
 ## Rate Limiting Strategy (Redis Sliding Window)
 
 ```
-Anonymous users:  60 requests/minute, 1 generation/day
+Anonymous users:  60 requests/minute, 0 generations (no token)
+Guest sessions:   60 requests/minute, 1 generation/day, 3 swaps/trip, 1 active trip
 Free accounts:    120 requests/minute, 5 generations/day
 Pro accounts:     300 requests/minute, unlimited generations
 Admin:            No limits

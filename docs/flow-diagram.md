@@ -8,8 +8,19 @@ flowchart TD
 
     %% ─── AUTH ───
     START --> AUTH_CHECK{Authenticated?}
-    AUTH_CHECK -->|No| AUTH_FLOW
+    AUTH_CHECK -->|No| GUEST_OR_AUTH{Sign Up or Try as Guest?}
     AUTH_CHECK -->|Yes| HOME
+
+    GUEST_OR_AUTH -->|Sign Up / Login| AUTH_FLOW
+    GUEST_OR_AUTH -->|Try as Guest| GUEST_FLOW
+
+    subgraph GUEST_FLOW[Guest Session]
+        GUEST_CREATE["POST /auth/guest"]
+        GUEST_TOKEN[Guest Token Issued — 72h TTL]
+        GUEST_CREATE --> GUEST_TOKEN
+    end
+
+    GUEST_TOKEN --> GUEST_HOME[Home — Guest Mode]
 
     subgraph AUTH_FLOW[Authentication]
         SIGNUP[POST /auth/signup]
@@ -25,6 +36,11 @@ flowchart TD
 
     JWT_ISSUED --> HOME
 
+    %% ─── GUEST HOME (limited) ───
+    GUEST_HOME --> NEW_TRIP
+    GUEST_HOME --> LIBRARY_BROWSE
+    GUEST_HOME -->|Locked| GUEST_UPGRADE_1["🔒 Sign up to unlock"]
+
     %% ─── HOME ───
     HOME[Home Screen]
     HOME --> NEW_TRIP[Create New Trip]
@@ -33,6 +49,18 @@ flowchart TD
     HOME --> FEED_VIEW[Social Feed]
     HOME --> PROFILE_VIEW[My Profile]
     HOME --> LORE_HUB[Drift Lore Hub]
+
+    %% ─── GUEST MIGRATION ───
+    subgraph GUEST_MIGRATION[Guest → Account Migration]
+        direction TB
+        MIG_SIGNUP["POST /auth/signup + X-Guest-Token"]
+        MIG_TRANSFER[Transfer trip ownership]
+        MIG_CLEANUP[Delete guest session from Redis]
+        MIG_SIGNUP --> MIG_TRANSFER --> MIG_CLEANUP
+    end
+
+    GUEST_UPGRADE_1 --> GUEST_MIGRATION
+    GUEST_MIGRATION --> HOME
 
     %% ═══════════════════════════════════════
     %% TRIP CREATION & ONBOARDING

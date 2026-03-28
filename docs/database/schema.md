@@ -53,6 +53,9 @@ CREATE TABLE trips (
   -- Destinations (supports multi-city V2)
   destinations JSONB NOT NULL, -- [{city, country, lat, lng, days_allocated}]
 
+  -- Guest access
+  guest_session_id TEXT, -- non-null for guest-created trips, cleared on account migration
+
   -- Dates
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,

@@ -20,6 +20,10 @@ drift:trip:{tripId}:cart                  → booking cart
 drift:rate:{userId}:gen                   → generation rate limit counter
 drift:rate:{ip}:api                       → API rate limit counter
 drift:session:{sessionId}:onboarding     → onboarding wizard state
+drift:guest:{token}                       → guest session state (HASH, 72h TTL)
+drift:guest:{token}:trip                  → guest's active trip UUID
+drift:guest:{token}:gen_count             → guest generation count today
+drift:guest:{token}:swap_count            → guest swap count for current trip
 drift:leaderboard:global                  → global XP sorted set
 drift:leaderboard:dest:pokhara-nepal     → destination leaderboard
 drift:lock:gen:{tripId}                   → distributed lock for generation
